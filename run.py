@@ -13,12 +13,12 @@ os.makedirs(PNG_DIR, exist_ok=True)
 emoji_map = {}
 emoji_map["names"] = {}
 
-for filename in os.listdir(SVG_DIR):
-    if not filename.endswith(".svg"):
+for filename in os.listdir(SOURCE_DIR):
+    if not filename.endswith(".png"):
         continue
 
-    codepoint = filename[:-4].lower()  # remove .svg extension
-    svg_path = os.path.join(SVG_DIR, filename)
+    codepoint = filename[:-4].lower()  # remove .png extension
+    source_path = os.path.join(SOURCE_DIR, filename)
     png_path = os.path.join(PNG_DIR, f"{codepoint}.png")
 
     try:
@@ -30,25 +30,16 @@ for filename in os.listdir(SVG_DIR):
         if not name:
             continue
 
+        # remove opacity and scale to 13x13
         subprocess.run([
-            "inkscape",
-            svg_path,
-            "--export-type=png",
-            f"--export-filename=out.png",
-            f"--export-width={PNG_SIZE}",
-            f"--export-height={PNG_SIZE}"
-            #"--export-background=#000000",
-            #"--export-background-opacity=1.0"
-        ], check=True)
-
-        # remove opacity
-        subprocess.run([
+            "magick",
             "convert",
-            "out.png",
-            "(", "+clone", "-alpha", "extract", "-threshold", "50%", ")",
-            "-compose",
-            "CopyOpacity",
-            "-composite",
+            f"{source_path}",
+            "-resize", f"{PNG_SIZE}x{PNG_SIZE}",
+            "-filter", "Box",
+            "-colors", "256",
+            "-channel", "A",
+            "-threshold", "50%",
             f"{png_path}"
         ])
 
