@@ -4,6 +4,7 @@ import emoji
 import subprocess
 
 SVG_DIR = "assets/svg/"
+SOURCE_DIR = "assets/72x72/"
 PNG_DIR = "assets/png/"
 OUTPUT_JSON = "index.json"
 PNG_SIZE = 13
@@ -28,22 +29,25 @@ for filename in os.listdir(SOURCE_DIR):
         name = name.replace("’", "")
 
         if not name:
+            print(f"Skipping {codepoint}: does not have a valid name")
             continue
 
-        # remove opacity and scale to 13x13
+        # order of operations matters
+        # scale down to 13x13px then apply alpha filter
         subprocess.run([
             "magick",
-            "convert",
             f"{source_path}",
-            "-resize", f"{PNG_SIZE}x{PNG_SIZE}",
-            "-filter", "Box",
-            "-colors", "256",
-            "-channel", "A",
-            "-threshold", "50%",
+
+            "-filter", "Mitchell", 
+            "-resize", f"{PNG_SIZE}x{PNG_SIZE}",       
+            "-colors", "256", 
+
+            "-channel", "A", 
+            "-threshold", "50%", 
+            "+channel",
+
             f"{png_path}"
         ])
-
-        os.unlink("out.png")
 
         emoji_map["names"][name] = codepoint
 
